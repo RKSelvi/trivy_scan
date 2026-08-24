@@ -52,6 +52,7 @@ jobs:
         id: acr-token
         run: |
           token="$(az acr login --name "$ACR_NAME" --expose-token --output tsv --query accessToken)"
+          echo "::add-mask::$token"
           echo "password=$token" >> "$GITHUB_OUTPUT"
 
       - name: Run Trivy vulnerability scanner
