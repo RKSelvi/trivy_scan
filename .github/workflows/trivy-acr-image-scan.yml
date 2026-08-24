@@ -1,0 +1,77 @@
+name: Trivy ACR image scan
+
+on:
+  workflow_dispatch:
+    inputs:
+      acr_name:
+        description: Azure Container Registry name
+        required: false
+        type: string
+      image_repository:
+        description: Container image repository name
+        required: false
+        type: string
+      image_tag:
+        description: Container image tag
+        required: false
+        default: latest
+        type: string
+  schedule:
+    - cron: "0 6 * * *"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  trivy-acr-scan:
+    runs-on: ubuntu-latest
+    env:
+      ACR_NAME: ${{ github.event.inputs.acr_name || vars.ACR_NAME }}
+      ACR_LOGIN_SERVER: ${{ vars.ACR_LOGIN_SERVER || format('{0}.azurecr.io', github.event.inputs.acr_name || vars.ACR_NAME) }}
+      IMAGE_REPOSITORY: ${{ github.event.inputs.image_repository || vars.ACR_IMAGE_REPOSITORY }}
+      IMAGE_TAG: ${{ github.event.inputs.image_tag || vars.ACR_IMAGE_TAG || 'latest' }}
+    steps:
+      - name: Validate workflow configuration
+        run: |
+          test -n "$ACR_NAME" || {
+            echo "Set the ACR_NAME variable or provide the acr_name workflow input."
+            exit 1
+          }
+          test -n "$IMAGE_REPOSITORY" || {
+            echo "Set the ACR_IMAGE_REPOSITORY variable or provide the image_repository workflow input."
+            exit 1
+          }
+
+      - name: Authenticate to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get ACR access token
+        id: acr-token
+        run: |
+          token="$(az acr login --name "$ACR_NAME" --expose-token --output tsv --query accessToken)"
+          echo "::add-mask::$token"
+          echo "password=$token" >> "$GITHUB_OUTPUT"
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          scan-type: image
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+          vuln-type: os,library
+        env:
+          TRIVY_USERNAME: 00000000-0000-0000-0000-000000000000
+          TRIVY_PASSWORD: ${{ steps.acr-token.outputs.password }}
+
+      - name: Upload Trivy scan results
+        if: ${{ always() && hashFiles('trivy-results.sarif') != '' }}
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-results.sarif
