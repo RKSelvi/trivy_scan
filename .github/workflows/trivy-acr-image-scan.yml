@@ -12,6 +12,7 @@ on:
       - 'src/**'
 
 permissions:
+  actions: read
   contents: read
   security-events: write
 
@@ -24,6 +25,9 @@ jobs:
       IMAGE_REPOSITORY: ubuntu-pro-stig
       IMAGE_TAG:        24.04_stable
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Validate workflow configuration
         run: |
           test -n "$ACR_NAME" || {
