@@ -32,20 +32,6 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Get ACR access token
-        id: acr-token
-        run: |
-          refresh_token="$(az acr login --name "$ACR_NAME" --expose-token --output tsv --query accessToken)"
-          echo "::add-mask::$refresh_token"
-          access_token="$(curl -s -X POST "https://$ACR_LOGIN_SERVER/oauth2/token" \
-            --data-urlencode "grant_type=refresh_token" \
-            --data-urlencode "service=$ACR_LOGIN_SERVER" \
-            --data-urlencode "scope=repository:${IMAGE_REPOSITORY}:pull" \
-            --data-urlencode "refresh_token=$refresh_token" \
-            | jq -r '.access_token')"
-          echo "::add-mask::$access_token"
-          echo "password=$access_token" >> "$GITHUB_OUTPUT"
-
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@v0.36.0
         with:
@@ -58,8 +44,8 @@ jobs:
           exit-code: "1"
           vuln-type: os,library
         env:
-          TRIVY_USERNAME: 00000000-0000-0000-0000-000000000000
-          TRIVY_PASSWORD: ${{ steps.acr-token.outputs.password }}
+          TRIVY_USERNAME: trivyscangithubaction
+          TRIVY_PASSWORD: ${{ secrets.ACR_CREDENTIALS }}
 
       - name: Upload Trivy scan results
         if: ${{ always() && hashFiles('trivy-results.sarif') != '' }}
