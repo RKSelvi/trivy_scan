@@ -2,22 +2,6 @@ name: Trivy ACR image scan
 
 on:
   workflow_dispatch:
-    inputs:
-      acr_name:
-        description: Azure Container Registry name
-        required: false
-        type: string
-      image_repository:
-        description: Container image repository name
-        required: false
-        type: string
-      image_tag:
-        description: Container image tag
-        required: false
-        default: latest
-        type: string
-  schedule:
-    - cron: "0 6 * * *"
 
 permissions:
   contents: read
@@ -27,10 +11,10 @@ jobs:
   trivy-acr-scan:
     runs-on: ubuntu-latest
     env:
-      ACR_NAME: ${{ github.event.inputs.acr_name || vars.ACR_NAME }}
-      ACR_LOGIN_SERVER: ${{ vars.ACR_LOGIN_SERVER || format('{0}.azurecr.io', github.event.inputs.acr_name || vars.ACR_NAME) }}
-      IMAGE_REPOSITORY: ${{ github.event.inputs.image_repository || vars.ACR_IMAGE_REPOSITORY }}
-      IMAGE_TAG: ${{ github.event.inputs.image_tag || vars.ACR_IMAGE_TAG || 'latest' }}
+      ACR_NAME:         itaasacr
+      ACR_LOGIN_SERVER: itaasacr.azurecr.io
+      IMAGE_REPOSITORY: ubuntu-pro-stig
+      IMAGE_TAG:        24.04_stable
     steps:
       - name: Validate workflow configuration
         run: |
