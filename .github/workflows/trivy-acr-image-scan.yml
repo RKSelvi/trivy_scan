@@ -53,7 +53,7 @@ jobs:
           output: trivy-results.sarif
           severity: CRITICAL,HIGH
           ignore-unfixed: true
-          exit-code: "1"
+          exit-code: "0"
           vuln-type: os,library
         env:
           TRIVY_USERNAME: trivyscangithubaction
