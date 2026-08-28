@@ -22,8 +22,8 @@ jobs:
     env:
       ACR_NAME:         itaasacr
       ACR_LOGIN_SERVER: itaasacr.azurecr.io
-      IMAGE_REPOSITORY: ubuntu-pro-stig
-      IMAGE_TAG:        24.04_stable
+      IMAGE_REPOSITORY: ubuntu-distro
+      IMAGE_TAG:        24.04_distro
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7.0.1
