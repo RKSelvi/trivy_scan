@@ -22,8 +22,9 @@ jobs:
     env:
       ACR_NAME:         itaasacr
       ACR_LOGIN_SERVER: itaasacr.azurecr.io
-      IMAGE_REPOSITORY: ubuntu-distro
-      IMAGE_TAG:        24.04_distro
+      IMAGE_REPOSITORY: gha-runner-scale-set-controller
+      IMAGE_TAG:        0-debian-dev
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7.0.1
